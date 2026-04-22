@@ -1,9 +1,3 @@
-import { config } from 'dotenv';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-config({ path: path.resolve(__dirname, '../../../../.env') });
 import { getDb, closeDb } from '../client.js';
 import { companies, fiscalYears, accounts } from '../schema.js';
 import { BAS_CORE } from './bas2024.js';

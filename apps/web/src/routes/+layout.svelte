@@ -9,7 +9,8 @@
     { href: '/', label: 'Översikt' },
     { href: '/vouchers', label: 'Verifikationer' },
     { href: '/accounts', label: 'Kontoplan' },
-    { href: '/reports', label: 'Rapporter' }
+    { href: '/reports', label: 'Rapporter' },
+    { href: '/integrity', label: 'Integritet' }
   ];
 
   const isActive = (href: string) => {

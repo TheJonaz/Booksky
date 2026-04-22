@@ -9,7 +9,9 @@ import {
   timestamp,
   numeric,
   uniqueIndex,
-  index
+  index,
+  jsonb,
+  bigint
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -58,7 +60,9 @@ export const vouchers = pgTable('vouchers', {
   description: text('description').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   postedAt: timestamp('posted_at', { withTimezone: true }),
-  correctsVoucherId: integer('corrects_voucher_id')
+  correctsVoucherId: integer('corrects_voucher_id'),
+  prevHash: text('prev_hash'),
+  hash: text('hash')
 }, (t) => ({
   uniqSeriesNumber: uniqueIndex('voucher_series_number_unique').on(t.companyId, t.fiscalYearId, t.series, t.number),
   byDate: index('voucher_date_idx').on(t.companyId, t.voucherDate)
@@ -76,10 +80,45 @@ export const voucherLines = pgTable('voucher_lines', {
   byAccount: index('vl_account_idx').on(t.accountId)
 }));
 
+export const attachments = pgTable('attachments', {
+  id: serial('id').primaryKey(),
+  companyId: integer('company_id').notNull().references(() => companies.id, { onDelete: 'cascade' }),
+  voucherId: integer('voucher_id').references(() => vouchers.id, { onDelete: 'set null' }),
+  filename: text('filename').notNull(),
+  contentType: text('content_type').notNull(),
+  sizeBytes: bigint('size_bytes', { mode: 'number' }).notNull(),
+  sha256: text('sha256').notNull(),
+  storagePath: text('storage_path').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
+}, (t) => ({
+  byVoucher: index('attach_voucher_idx').on(t.voucherId),
+  byHash: index('attach_hash_idx').on(t.companyId, t.sha256)
+}));
+
+export const auditLog = pgTable('audit_log', {
+  id: serial('id').primaryKey(),
+  companyId: integer('company_id').notNull().references(() => companies.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  actor: text('actor').notNull().default('system'),
+  entityType: text('entity_type').notNull(),
+  entityId: integer('entity_id').notNull(),
+  action: text('action').notNull(),
+  payload: jsonb('payload')
+}, (t) => ({
+  byEntity: index('audit_entity_idx').on(t.companyId, t.entityType, t.entityId),
+  byTime: index('audit_time_idx').on(t.companyId, t.createdAt)
+}));
+
 export const companiesRelations = relations(companies, ({ many }) => ({
   fiscalYears: many(fiscalYears),
   accounts: many(accounts),
-  vouchers: many(vouchers)
+  vouchers: many(vouchers),
+  attachments: many(attachments)
+}));
+
+export const attachmentsRelations = relations(attachments, ({ one }) => ({
+  company: one(companies, { fields: [attachments.companyId], references: [companies.id] }),
+  voucher: one(vouchers, { fields: [attachments.voucherId], references: [vouchers.id] })
 }));
 
 export const fiscalYearsRelations = relations(fiscalYears, ({ one, many }) => ({
@@ -95,7 +134,9 @@ export const accountsRelations = relations(accounts, ({ one, many }) => ({
 export const vouchersRelations = relations(vouchers, ({ one, many }) => ({
   company: one(companies, { fields: [vouchers.companyId], references: [companies.id] }),
   fiscalYear: one(fiscalYears, { fields: [vouchers.fiscalYearId], references: [fiscalYears.id] }),
-  lines: many(voucherLines)
+  lines: many(voucherLines),
+  attachments: many(attachments),
+  corrects: one(vouchers, { fields: [vouchers.correctsVoucherId], references: [vouchers.id], relationName: 'correction' })
 }));
 
 export const voucherLinesRelations = relations(voucherLines, ({ one }) => ({

@@ -148,9 +148,9 @@
 
   <div class="toolbar">
     <a class="btn" href="{base}/vouchers">Avbryt</a>
-    <div style="display: flex; gap: 8px">
-      <button type="submit" name="post" value="0" class="btn" disabled={!balanced}>Spara som utkast</button>
-      <button type="submit" name="post" value="1" class="btn btn-primary" disabled={!balanced}>Bokför</button>
-    </div>
+    <button type="submit" class="btn btn-primary" disabled={!balanced}>Spara utkast</button>
   </div>
+  <p class="muted" style="font-size: 12px; margin-top: 8px">
+    Utkast kan få bilagor (kvitton) innan du bokför. När du bokför blir verifikationen oföränderlig.
+  </p>
 </form>

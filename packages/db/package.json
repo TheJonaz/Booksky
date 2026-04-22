@@ -10,9 +10,11 @@
     "./schema": "./src/schema.ts"
   },
   "scripts": {
-    "push": "drizzle-kit push",
-    "studio": "drizzle-kit studio",
-    "seed": "tsx src/seed/run.ts"
+    "push": "dotenv -e ../../.env -- drizzle-kit push && dotenv -e ../../.env -- tsx src/apply-triggers.ts",
+    "push:schema": "dotenv -e ../../.env -- drizzle-kit push",
+    "triggers": "dotenv -e ../../.env -- tsx src/apply-triggers.ts",
+    "studio": "dotenv -e ../../.env -- drizzle-kit studio",
+    "seed": "dotenv -e ../../.env -- tsx src/seed/run.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.36.4",
@@ -22,6 +24,7 @@
     "drizzle-kit": "^0.28.1",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "dotenv-cli": "^8.0.0"
   }
 }

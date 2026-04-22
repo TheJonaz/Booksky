@@ -1,7 +1,7 @@
 import { db } from '$lib/server/db.js';
-import { accounts, vouchers, voucherLines } from '@booksky/db';
+import { accounts, vouchers, voucherLines, auditLog } from '@booksky/db';
 import { validateVoucher, kronorToOre, oreToNumeric } from '@booksky/core';
-import { eq, desc, max, and } from 'drizzle-orm';
+import { eq, max, and } from 'drizzle-orm';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types.js';
 
@@ -22,9 +22,7 @@ export const actions: Actions = {
 
     const voucherDate = String(form.get('voucherDate') ?? '');
     const description = String(form.get('description') ?? '');
-    const post = form.get('post') === '1';
 
-    // Parse rader: accountId_0, debit_0, credit_0, description_0 osv
     const lines: {
       accountId: number;
       debit: string;
@@ -38,7 +36,7 @@ export const actions: Actions = {
       const debit = String(form.get(`debit_${i}`) ?? '').trim();
       const credit = String(form.get(`credit_${i}`) ?? '').trim();
       const desc = String(form.get(`description_${i}`) ?? '').trim() || null;
-      if (!accId && !debit && !credit) continue; // tom rad, hoppa över
+      if (!accId && !debit && !credit) continue;
       lines.push({ accountId: accId, debit, credit, description: desc });
     }
 
@@ -51,7 +49,6 @@ export const actions: Actions = {
       });
     }
 
-    // Datumet måste ligga inom räkenskapsåret
     if (voucherDate < fiscalYear.startDate || voucherDate > fiscalYear.endDate) {
       return fail(400, {
         errors: [`Datumet måste ligga inom räkenskapsåret ${fiscalYear.startDate} – ${fiscalYear.endDate}`],
@@ -60,7 +57,6 @@ export const actions: Actions = {
     }
 
     const newId = await db.transaction(async (tx) => {
-      // Nästa verifikationsnummer i serie A för detta räkenskapsår
       const [next] = await tx
         .select({ m: max(vouchers.number) })
         .from(vouchers)
@@ -82,7 +78,7 @@ export const actions: Actions = {
           number: nextNumber,
           voucherDate,
           description,
-          postedAt: post ? new Date() : null
+          postedAt: null
         })
         .returning({ id: vouchers.id });
 
@@ -95,6 +91,14 @@ export const actions: Actions = {
           description: l.description
         }))
       );
+
+      await tx.insert(auditLog).values({
+        companyId: company.id,
+        entityType: 'voucher',
+        entityId: v.id,
+        action: 'create',
+        payload: { lineCount: lines.length, voucherDate, description }
+      });
 
       return v.id;
     });
