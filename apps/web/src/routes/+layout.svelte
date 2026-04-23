@@ -10,6 +10,7 @@
     { href: '/vouchers', label: 'Verifikationer' },
     { href: '/accounts', label: 'Kontoplan' },
     { href: '/reports', label: 'Rapporter' },
+    { href: '/sie', label: 'SIE' },
     { href: '/integrity', label: 'Integritet' }
   ];
 

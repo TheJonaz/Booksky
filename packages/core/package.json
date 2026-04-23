@@ -8,11 +8,15 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "scripts": {
+    "test": "node --import tsx/esm --test 'test/**/*.test.ts'"
+  },
   "dependencies": {
     "@booksky/db": "*",
     "drizzle-orm": "^0.36.4"
   },
   "devDependencies": {
+    "tsx": "^4.19.2",
     "typescript": "^5.6.3"
   }
 }

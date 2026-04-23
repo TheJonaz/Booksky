@@ -19,6 +19,8 @@ export const companyForm = pgEnum('company_form', ['sole_trader', 'ab']);
 export const accountType = pgEnum('account_type', ['asset', 'liability', 'equity', 'income', 'expense']);
 export const fiscalYearStatus = pgEnum('fiscal_year_status', ['open', 'closed']);
 
+export type AccountType = (typeof accountType.enumValues)[number];
+
 export const companies = pgTable('companies', {
   id: serial('id').primaryKey(),
   name: text('name').notNull(),
